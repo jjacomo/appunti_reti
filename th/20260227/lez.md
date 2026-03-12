@@ -20,7 +20,7 @@ Quando scendi gli strati vengono aggiunte. Fino a quando si arriva al filo fisic
 Quando arriva all'altro computer si risale spacchettando man mano le etichette.
 
 N-`Protocol Data Unit` = dati trasferiti fra entità di strato N
-Quindi il PDU scendendo gli strati si ingrandisce aggiungendo PCI
+Quindi il PDU scendendo gli strati si ingrandisce aggiungendo PCI (al SDU = Service Data Unit (il payload))
 
 
 DI questi 7 layer due sono fondamentali.
