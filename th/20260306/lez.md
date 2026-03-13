@@ -97,10 +97,63 @@ Questo e' il principio, vediamo come funziona:
 * Trasformo sequenze di bit in polinomi
     10010 = x^4 * 1 + x^3 * 0 + x^2 * 0 + x * 1 + 1 * 0 = P(x)
 * Divisione tra polinomi:
-    [P(x) / G(x) = Q(x) + r(x)]  <-- G(x) e' concordato (protocollo)
+    [P(x) / G(x) = Q(x) + r(x)]  <-- G(x) e' concordato (protocollo) (e' detto polinomio generatore)
     Ricorda la divisione in colonna (si fa con le sottrazioni => in binario e' velocissimo)
     Bisogna scegliere furbescamente G(x) in modo da (?) . 
-    G(x) e' dello stesso grado di P(x) => nel mondo binario viene fuori sempre un polinomio di grado minore
+    G(x) e' dello stesso grado di P(x) => nel mondo binario viene fuori sempre un polinomio di grado minore:
+    ( x^4 + x^3 + 1 ) * x^2 = x^6 + x^5 + x^2
+       1 1 0 0 1               1 1 0 0 1 _**0 0**_        <-- Ho aggiunto due 0 (moltiplicando per x^2)
 
+    Sia r il grado del polinomio G(x). r(x) ha sicuramente grado < di r (la sottrazione si fa con lo XOR).
+
+    Voglio trasmettere Pk-1(x):
+    * moltiplico: Tn-1(x) = Pk-1(x) * x^r
+
+    * divido: Tn-1(x) / Gr(x) = Pk-1(x) * x^r = Q(x) + R(x)
+
+    * mi interessa solo il resto: di sicuro R(x) ha grado minore di r (grado di G e quello di x^r)
+        ( Tn-1(x) - R(x) ) / Gr(x) = Q(x)
+        se R(x) = 0 allora non ci sono errori
+
+    Nella cpu questo si puo' ottimizzare un sacco e fa tutto in un ciclo di clock.
+
+#### Esempio
+
+G(x) = x^2 + x + 1      <-- quindi r = 2
+P(x) = x11+0+x9+x8+0+x6+0+0+0+x2+0+1    <-- da trasmettere
+
+devo moltiplicare per r:
+
+P(x)x2= x13+0+x11+x10+0+x8+0+0+0+x4+0+x2+0+0
+
+divido: 
+T(x) / G(x)   da cui ottengo:
+
+R(x) = 1
+Q(x) = x11 + x10 + x9 + x8 + x2 + x + 1
+
+quindi il polinomio da trasmettere è
+P(x)x2 + R(x) = Tn-1(x) = x13+0+x11+x10+0+x8+0+0+0+x4+0+x2+0+1
+
+In conclusione la sequenza di bit da trasmettere è dunque: 101101000101[01] <-- bit del controllo errore
+
+Se quando arriva, divido per G(x) e ottengo resto 0 allora e' giusto.
+
+
+
+La domanda e': sono sicuro che se il resto viene zero sia giusto? (magari e' sbagliato lo stesso ma non lo ho rilevato).
+
+Mando:  1011 0100 0101 01       = T(x)
+arriva: 1[1]11 0100 0[0]01 01       = T'(x)
+
+E' come se l'errore fosse avvenuto sommando (XOR) 0[1]00 0000 0[1]00 00 = E(x)
+
+Se divido:
+T'(x) / G(x) = ( T(x) + E(x) ) / G(x) = (T(x) / G(x)) + (E(x) / G(x))
+
+Quindi non rilevo l'errore se E(x) / G(x) fa 0!!!!
+Quindi vorrei scegliere G in modo da minimizzare le probabilita' che E(x) / G(x) non faccia 0.
+
+Ora pausa non so se torno dopo (laurea riki)
 
 
