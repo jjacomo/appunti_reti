@@ -156,4 +156,124 @@ Quindi vorrei scegliere G in modo da minimizzare le probabilita' che E(x) / G(x)
 
 Ora pausa non so se torno dopo (laurea riki)
 
+# 19/03/2026
 
+L'utlima volta non sono tornato (ho perso un ora).
+Pero' non sembra andato molto avanti: siamo a slide Numerazione
+
+## Inizio nuova trasmissione
+
+A contatta per la prima volta B.
+
+### Numerazione
+
+Entrambi tengono dei contatori (`numerazione`) che contano quanti pacchetti sono stati mandati.
+I contatori stessi vengono messi dentro al pacchetto per identificarlo.
+Grazie a questo identificatore B puo' anche confermare ad a i pacchetti che gli sono arrivati.
+
+Si pone un vincolo sul numero di pacchetti mandati in una volta.
+
+### Time Out
+
+![time out](./timeout.png)
+le linee scure sono le info dei protocolli. Sono PCI (protocol control information)
+Quelle chiare sono i dati utili.
+Quindi B manda anche solo pacchetti con PCI senza dati ulteriori (ACK).
+
+Cosi' se non arrivano piu' i messaggi di conferma invece di deadlock si puo' riprendere.
+
+### ACK
+
+Sono i pacchetti di conferma (`acknowledge`).
+La domanda e': se B ha anche dei dati da mandare li puo' mettere insieme al pacchetto ACK?
+La risposta e' si', si chiama `piggybacking`.
+Attacchi le conferme a un pacchetto normale.
+
+Un ack e' semplicemente il numero R che ti dice quanti pacchetti ti sono arrivati.
+
+Domanda: se ti arriva un R=4 ma non ti arrivano prima R=0,1,2,3 cosa vuol dire? 0,1,2,3 sono arrivati o no?
+Bisogna decidere se mandare un ACK ogni volta che ti arriva un messaggio (`conferma esplicita`) oppure mandarne uno ogni tanto (`conferma implicita`) per confermare la ricevuta di piu' pacchetti.
+Tieni a mente che anche un ACK seppur piccolo occupa spazio e banda del canale.
+
+Ovviamente non si puo' confermare la conferma (loop infinito inutile).
+
+### Finestra di trasmissione
+
+S e' il contatore che conta i pacchetti che ho trasmesso (e poi lo metto nelle PCI).
+Il problema e' che, essendo un protocollo, devo stabilire a priori il numero di bit per rappresentare S.
+Se arrivo al punto che vado in overflow come faccio?
+
+Allora, quando a B arriva il pacchetto 3, lo processa e da l'ACK ad A, il pacchetto 3 e' andato.
+Dopo un po' di tempo arriva un altro pacchetto numerato 3, non c'e' problema. Il vecchio 3 e' gia' andato tanto.
+Il problema si pone quando arrivano due pacchetti 3 molto vicini tra loro.
+
+Allora si fa che si stabilische una finestra di pacchetti che si possono trasmettere senza conferma.
+Cioe' ad esempio scelgo W=4 (window) e quindi mando al massimo 4 pacchetti insieme non confermati.
+Quando B ti manda 1 ACK allora mandi 1 pacchetto (cosi' i pacchetti inviati non confermati sono comunque 4).
+Se scelgo Smax piu' grande W (la finestra) allora risolvo il problema di prima.
+
+Se nella conferma esplicita (mando sempre ACK) non ti arriva ACK1 ma non di 0 la window rimane bloccata nello 0. Quando arriva l'ACK di 0 si sbloccano 2 in un colpo solo.
+Per questo motivo i protocolli moderni fanno un ibrido tra conferma esplicita e implicita: mandano sempre l'ack per ogni messaggio ma se ti arriva un ACK di 3 (e non ti sono ancora arrivati quelli prima) puoi contare che quelli prima sono gia' arrivati (cosi' non si blocca la window). FICO
+
+Ora bisognerebbe capire come si sceglie $$S_{max}$$ e $$W$$
+> [!WARNING]
+>
+> $$W$$ deve essere MINORE di $$S_{max}$$
+>
+>  se fosse uguale ci sarebbero dei casi molto sfortunati che pero'
+>  romperebbero tutto (guarda slide 55)
+>
+=>
+### Controllo di flusso
+
+Come funziona quando A e' velocissimo a mandare pacchetti ma B e' molto lento a processarli?
+All'inizio A manda tanti pacchetti (tanti quanto la dimensione della finestra). [*]
+B pero' ci mette un po'. A rimarra' quasi sempre bloccato nella finestra.
+La cosa bella pero' e' che grazie a questa cosa della finestra dopo il primo burst di pacchetti quelli dopo vanno alla velocita' di quanto B riesce a consumarli (quindi si sincronizzano in automatico).
+
+[*] B deve essere in grado di memorizzare tutta la dimensione della finestra.
+    Ecco come si decide la dimensione della finestra (ogni volta e' decisa a seconda delle capacita' del ricevitore)
+
+## Protocollo ARQ
+
+Ora ho codice rilevazione (capire che sono giusti);
+ho identificatori;
+ho timeout;
+ho ack;
+ho finestra di trasmissione;
+
+Manca il fatto della `ritrasmissione`!
+
+### Go-back-n ARQ
+
+Se mi arriva sbagliato il pacchetto 5 (ma mi arrivano giusti 6 e 7), vengono rimandati 5, 6 e 7 (la finestra (?))
+
+### Selective Repeat ARQ
+
+Ti arriva il pacchetto 1 ma 0 no. Allora mando un pacchetto indietro Selective Reject 0 (rimanda il pacchetto 0)
+
+
+Slide 59 e' sbagliata, dovrebbe esserci RJ2, non RJ3
+Vabbe' comunque ti serve a far capire che il timeout deve essere ben dimensionato.
+
+## RTT
+
+Round Trip Time = tempo necessario per effettuare un’andata e ritorno sul canale.
+![rtt](./rtt.png)
+
+### Scelta timeout
+
+Il time out va relazionato al RTT
+
+* Time out troppo breve:
+    * Non si attende l’arrivo dell’ACK
+    * Invio non necessario di trame duplicate
+
+* Time out troppo lungo:
+    * Inutile attesa prima di ritrasmettere le trame errate
+
+In entrambi i casi si spreca capacità di trasmissione (banda) e si degradano le prestazioni.
+
+
+Prossimamente proviamo a studiare le prestazioni in base ai parametri (che sono un fottio):
+dimensione pacchetti, dimensione W, Smax, ...
