@@ -234,7 +234,7 @@ La cosa bella pero' e' che grazie a questa cosa della finestra dopo il primo bur
 [*] B deve essere in grado di memorizzare tutta la dimensione della finestra.
     Ecco come si decide la dimensione della finestra (ogni volta e' decisa a seconda delle capacita' del ricevitore)
 
-## Protocollo ARQ
+## Protocollo ARQ (?)
 
 Ora ho codice rilevazione (capire che sono giusti);
 ho identificatori;
